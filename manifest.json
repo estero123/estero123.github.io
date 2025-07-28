@@ -1,0 +1,9 @@
+{
+  "name": "Kalkulator Mocy Mikroinstalacji",
+  "short_name": "Kalkulator Mocy Mikroinstalacji",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#fff",
+  "theme_color": "#fff",
+  "description": "Kalkulator Mocy Mikroinstalacji offline"
+}

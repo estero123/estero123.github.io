@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <link rel="manifest" href="manifest.json">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kalkulator Mocy Mikroinstalacji</title>
+    <script src="./jquery.min.js"></script>
+    <style>
+        body { font-family: sans-serif; background-color: #f4f6f9; color: #333; display: flex; justify-content: center; padding: 20px; }
+        .container { background-color: #fff; box-shadow: 0 2px 10px rgba(0,0,0,0.1); padding: 30px; border-radius: 8px; max-width: 800px; }
+        .tn-forms-row { display: flex; flex-wrap: wrap; align-items: center; margin-bottom: 15px; }
+        .tn-forms-row.has-error { border: 1px solid #dc3545; border-radius: 4px; padding: 5px; }
+        .col-sm-8 { flex: 0 0 66.66%; max-width: 66.66%; }
+        .col-sm-2 { flex: 0 0 16.66%; max-width: 16.66%; }
+        .col-sm-12 { flex: 0 0 100%; max-width: 100%; }
+        label { font-weight: bold; font-size: 14px; }
+        input[type="number"], .tn-forms-text-input { width: 95%; padding: 8px; font-size: 14px; border-radius: 4px; border: 1px solid #ccc; }
+        .tn-forms-empty-validation { color: #dc3545; font-size: 12px; display: none; margin-top: 4px; }
+        .tn-forms-row.has-error .tn-forms-empty-validation { display: block; }
+        #Przelicz { background-color: #344290; color: white; border: none; padding: 10px 20px; font-size: 16px; border-radius: 5px; cursor: pointer; float: right; }
+        #Przelicz:hover { background-color: #2a3574; }
+        .tn-forms-row-buttons { margin-top: 20px; }
+        #Wynik { margin-top: 30px; }
+        .s19-banner-alert { border: 1px solid #E2007A; padding: 20px; margin-top: 30px; }
+        hr { margin: 30px 0; }
+        @media (max-width: 768px) { .col-sm-8, .col-sm-2 { flex: 0 0 100%; max-width: 100%; } .col-sm-8 { margin-bottom: 10px; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <b><p style="font-size: 25px">Sprawdź czy moc magazynu zostanie zsumowana z mocą zainstalowanego w mikroinstalacji źródła OZE</p></b><br>
+        <p>Wpisz dane parametrów technicznych zamontowanych urządzeń użytych w Twojej mikroinstalacji do formularza poniżej.</p>
+        
+        <div id="Dane">
+            <div class="tn-forms-row">
+                <div class="col-sm-8"><label for="Suma_mocy">Suma mocy maksymalnych inwerterów [kW]</label></div>
+                <div class="col-sm-2"><input type="number" required="true" id="Suma_mocy"><div class="tn-forms-empty-validation">Pole jest obowiązkowe</div></div>
+            </div>
+            <div class="tn-forms-row">
+                <div class="col-sm-8"><label for="Moc_magazynu">Moc zainstalowana magazynu energii elektrycznej [kW]</label></div>
+                <div class="col-sm-2"><input type="number" required="true" id="Moc_magazynu"><div class="tn-forms-empty-validation">Pole jest obowiązkowe</div></div>
+            </div>
+            <div class="tn-forms-row">
+                <div class="col-sm-8"><label for="Moc_zainstalowana">Moc zainstalowana mikroinstalacji (znamionowa paneli, turbiny, generatora) [kW]</label></div>
+                <div class="col-sm-2"><input type="number" required="true" id="Moc_zainstalowana"><div class="tn-forms-empty-validation">Pole jest obowiązkowe</div></div>
+            </div>
+        </div>
+
+        <div class="tn-forms-row tn-forms-row-buttons">
+            <div class="col-sm-12"><button type="button" id="Przelicz">Przelicz</button></div>
+        </div>
+        
+        <div id="Wynik"></div>
+    </div>
+
+    <script>
+        $(document).ready(function() {
+            'use strict';
+            
+            function validateForm() {
+                let isValid = true;
+                $('#Dane .has-error').removeClass('has-error');
+                $('#Dane .tn-forms-empty-validation').hide();
+                $('#Dane input[required]').each(function() {
+                    if ($(this).val() === '') {
+                        isValid = false;
+                        $(this).closest('.tn-forms-row').addClass('has-error').find('.tn-forms-empty-validation').show();
+                    }
+                });
+                return isValid;
+            }
+
+            $('#Przelicz').on('click', function() {
+                if (!validateForm()) {
+                    $('#Wynik').html('');
+                    return;
+                }
+                
+                const sumaMocy = parseFloat($('#Suma_mocy').val());
+                const mocMagazynu = parseFloat($('#Moc_magazynu').val());
+                const mocZainstalowana = parseFloat($('#Moc_zainstalowana').val());
+
+                // Perform the two primary condition checks
+                const check1_isMet = mocMagazynu <= mocZainstalowana;
+                const check2_isMet = sumaMocy <= mocZainstalowana;
+                
+                // *** THE CORRECTED LOGIC FOR QUESTION 3 ***
+                // Summing occurs if EITHER of the first two conditions is NOT met.
+                const summingOccurs = !check1_isMet || !check2_isMet;
+
+                const resultHTML = `
+                    <div class="row tn-forms-text-control tn-forms-row">
+                        <div class="col-sm-12"><p style="font-size: 22px"><b>Spełnienie warunków ustawowych:</b></p></div>
+                    </div>
+                    <div class="row tn-forms-input tn-forms-row">
+                        <div class="col-sm-8"><label for="Wynik_1">Czy moc zainstalowana magazynu energii elektrycznej nie jest większa od mocy zainstalowanej elektrycznej mikroinstalacji (paneli PV, turbiny, generatora)?</label></div>
+                        <div class="col-sm-2"><input value="${check1_isMet ? 'TAK' : 'NIE'}" class="tn-forms-text-input" readonly="true" id="Wynik_1" style="color:${check1_isMet ? 'rgb(60, 179, 113)' : 'red'}; font-weight:bold;"></div>
+                    </div>
+                    <div class="row tn-forms-input tn-forms-row">
+                        <div class="col-sm-8"><label for="Wynik_2">Czy łączna moc możliwa do wprowadzenia do sieci (czyt. suma mocy maksymalnych inwerterów) nie jest większa niż moc zainstalowana elektryczna mikroinstalacji (paneli PV, turbiny, generatora)?</label></div>
+                        <div class="col-sm-2"><input value="${check2_isMet ? 'TAK' : 'NIE'}" class="tn-forms-text-input" readonly="true" id="Wynik_2" style="color:${check2_isMet ? 'rgb(60, 179, 113)' : 'red'}; font-weight:bold;"></div>
+                    </div>
+                    <div class="row tn-forms-input tn-forms-row">
+                        <div class="col-sm-8"><label for="Wynik_3"><h4 style="color:rgb(226, 0, 122);"><b>Czy nastąpi zsumowanie mocy zainstalowanej magazynu z mocą sumaryczną zainstalowanego w mikroinstalacji źródła OZE?</b></h4></label></div>
+                        <div class="col-sm-2" style="margin-top: 10px;"><input value="${summingOccurs ? 'TAK' : 'NIE'}" class="tn-forms-text-input" readonly="true" id="Wynik_3" style="color:${summingOccurs ? 'rgb(60, 179, 113)' : 'red'}; font-weight:bold;"></div>
+                    </div>
+                    <hr>
+                    <div id="Wazne">
+                        <div class="s19-banner-alert">
+                            <strong><span style="font-size: 16px;">Ważne</span></strong><br><br>
+                            Abyśmy mogli pozytywnie rozpatrzyć Twoje zgłoszenie przełączenia mikroinstalacji, sumaryczna moc zainstalowana wraz z magazynem energii elektrycznej po przeliczeniu, musi zawierać parametry techniczne urządzeń, które nie przekroczą istniejącej mocy przyłączeniowej obiektu.
+                        </div>
+                    </div>
+                `;
+                
+                $('#Wynik').html(resultHTML).show();
+            });
+        });
+    </script>
+</body>
+</html>
