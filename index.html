@@ -4,53 +4,139 @@
     <link rel="manifest" href="manifest.json">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kalkulator Mocy Mikroinstalacji</title>
+    <title>Kalkulator Odbioru Mikroinstalacji z Tabelą</title>
+    <!-- Assumes jquery.min.js is in the same folder -->
     <script src="./jquery.min.js"></script>
     <style>
-        body { font-family: sans-serif; background-color: #f4f6f9; color: #333; display: flex; justify-content: center; padding: 20px; }
-        .container { background-color: #fff; box-shadow: 0 2px 10px rgba(0,0,0,0.1); padding: 30px; border-radius: 8px; max-width: 800px; }
-        .tn-forms-row { display: flex; flex-wrap: wrap; align-items: center; margin-bottom: 15px; }
-        .tn-forms-row.has-error { border: 1px solid #dc3545; border-radius: 4px; padding: 5px; }
-        .col-sm-8 { flex: 0 0 66.66%; max-width: 66.66%; }
-        .col-sm-2 { flex: 0 0 16.66%; max-width: 16.66%; }
-        .col-sm-12 { flex: 0 0 100%; max-width: 100%; }
-        label { font-weight: bold; font-size: 14px; }
-        input[type="number"], .tn-forms-text-input { width: 95%; padding: 8px; font-size: 14px; border-radius: 4px; border: 1px solid #ccc; }
-        .tn-forms-empty-validation { color: #dc3545; font-size: 12px; display: none; margin-top: 4px; }
-        .tn-forms-row.has-error .tn-forms-empty-validation { display: block; }
-        #Przelicz { background-color: #344290; color: white; border: none; padding: 10px 20px; font-size: 16px; border-radius: 5px; cursor: pointer; float: right; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f4f6f9; color: #333; display: flex; justify-content: center; padding: 20px; box-sizing: border-box; }
+        .container { background-color: #fff; box-shadow: 0 2px 10px rgba(0,0,0,0.1); padding: 20px 30px; border-radius: 8px; max-width: 800px; width: 100%; }
+        
+        h2 { text-align: center; color: #344290; margin-top: 0; }
+
+        .form-section { border: 1px solid #e0e0e0; border-radius: 8px; padding: 20px; margin-bottom: 25px; }
+        .form-section h3 { margin-top: 0; color: #344290; border-bottom: 1px solid #eee; padding-bottom: 10px; font-size: 1.2em; }
+        .form-row { display: flex; flex-wrap: wrap; align-items: center; margin-bottom: 15px; }
+        .form-row label { flex: 1 1 60%; padding-right: 15px; font-weight: 500; font-size: 16px; }
+        .form-row .input-wrapper { flex: 1 1 40%; }
+        input[type="number"], select { width: 100%; padding: 10px; font-size: 16px; border-radius: 4px; border: 1px solid #ccc; box-sizing: border-box; }
+        .form-error { color: #dc3545; font-size: 14px; display: none; margin-top: 5px; width: 100%; }
+        .form-row.has-error input, .form-row.has-error select { border-color: #dc3545; }
+        .form-row.has-error .form-error { display: block; }
+        
+        .phase-selector { display: flex; gap: 20px; margin-bottom: 20px; }
+        .phase-selector label { display: inline-flex; align-items: center; cursor: pointer; font-size: 16px; }
+        .phase-selector input[type="radio"] { margin-right: 8px; transform: scale(1.2); }
+
+        #info-mocy-umownej { background-color: #f0f4ff; border-radius: 4px; padding: 10px; margin-top: 15px; font-size: 14px; color: #555; display: none; text-align: center; }
+        #info-mocy-umownej span { font-weight: bold; color: #333; }
+
+        /* --- New Table Styles --- */
+        .table-container { margin-bottom: 25px; overflow-x: auto; }
+        .data-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+        .data-table th, .data-table td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+        .data-table thead th { background-color: #eef2f7; font-weight: bold; color: #344290; }
+        .data-table thead .main-header { background-color: #d8e1f0; font-size: 16px; }
+
+        #Przelicz { background-color: #344290; color: white; border: none; padding: 12px 25px; font-size: 18px; font-weight: bold; border-radius: 5px; cursor: pointer; display: block; width: 100%; margin-top: 20px; }
         #Przelicz:hover { background-color: #2a3574; }
-        .tn-forms-row-buttons { margin-top: 20px; }
+        
         #Wynik { margin-top: 30px; }
-        .s19-banner-alert { border: 1px solid #E2007A; padding: 20px; margin-top: 30px; }
-        hr { margin: 30px 0; }
-        @media (max-width: 768px) { .col-sm-8, .col-sm-2 { flex: 0 0 100%; max-width: 100%; } .col-sm-8 { margin-bottom: 10px; } }
+        .result-box { border-radius: 8px; padding: 20px; text-align: center; }
+        .result-box h3 { margin-top: 0; font-size: 24px; }
+        .result-box p { margin: 8px 0; font-size: 16px; }
+        .result-positive { background-color: #e9f5ec; color: #155724; border: 2px solid #28a745; }
+        .result-negative { background-color: #f8d7da; color: #721c24; border: 2px solid #dc3545; }
+        .result-details { font-size: 14px; color: #555; border-top: 1px solid #ddd; padding-top: 15px; margin-top: 15px; }
+
+        @media (max-width: 600px) {
+            .form-row { flex-direction: column; align-items: stretch; }
+            .form-row label { margin-bottom: 8px; }
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <b><p style="font-size: 25px">Sprawdź czy moc magazynu zostanie zsumowana z mocą zainstalowanego w mikroinstalacji źródła OZE</p></b><br>
-        <p>Wpisz dane parametrów technicznych zamontowanych urządzeń użytych w Twojej mikroinstalacji do formularza poniżej.</p>
+        <h2>Kalkulator Odbioru Mikroinstalacji</h2>
         
-        <div id="Dane">
-            <div class="tn-forms-row">
-                <div class="col-sm-8"><label for="Suma_mocy">Suma mocy maksymalnych inwerterów [kW]</label></div>
-                <div class="col-sm-2"><input type="number" required="true" id="Suma_mocy"><div class="tn-forms-empty-validation">Pole jest obowiązkowe</div></div>
+        <div class="form-section">
+            <h3>Parametry instalacji</h3>
+            <div class="form-row">
+                <label for="panele">Moc paneli (źródła OZE) [kW]</label>
+                <div class="input-wrapper">
+                    <input type="number" required="true" id="panele" placeholder="np. 9.8">
+                    <div class="form-error">Pole jest obowiązkowe</div>
+                </div>
             </div>
-            <div class="tn-forms-row">
-                <div class="col-sm-8"><label for="Moc_magazynu">Moc zainstalowana magazynu energii elektrycznej [kW]</label></div>
-                <div class="col-sm-2"><input type="number" required="true" id="Moc_magazynu"><div class="tn-forms-empty-validation">Pole jest obowiązkowe</div></div>
+            <div class="form-row">
+                <label for="falownik">Moc falownika (inwertera) [kW]</label>
+                <div class="input-wrapper">
+                    <input type="number" required="true" id="falownik" placeholder="np. 10">
+                    <div class="form-error">Pole jest obowiązkowe</div>
+                </div>
             </div>
-            <div class="tn-forms-row">
-                <div class="col-sm-8"><label for="Moc_zainstalowana">Moc zainstalowana mikroinstalacji (znamionowa paneli, turbiny, generatora) [kW]</label></div>
-                <div class="col-sm-2"><input type="number" required="true" id="Moc_zainstalowana"><div class="tn-forms-empty-validation">Pole jest obowiązkowe</div></div>
+            <div class="form-row">
+                <label for="magazyn">Moc magazynu energii [kW]</label>
+                <div class="input-wrapper">
+                    <input type="number" required="true" id="magazyn" value="0" placeholder="0 jeśli brak">
+                    <div class="form-error">Pole jest obowiązkowe</div>
+                </div>
             </div>
         </div>
 
-        <div class="tn-forms-row tn-forms-row-buttons">
-            <div class="col-sm-12"><button type="button" id="Przelicz">Przelicz</button></div>
+        <div class="form-section">
+            <h3>Moc umowna</h3>
+            
+            <!-- --- New Reference Table --- -->
+            <div class="table-container">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th colspan="3" class="main-header">1 Fazowa</th>
+                            <th colspan="3" class="main-header">3 fazowa</th>
+                        </tr>
+                        <tr>
+                            <th>Umowna [kW]</th>
+                            <th>Przyłączeniowa [kW]</th>
+                            <th>Zabezpieczenie [A]</th>
+                            <th>Umowna [kW]</th>
+                            <th>Przyłączeniowa [kW]</th>
+                            <th>Zabezpieczenie [A]</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>0,5</td><td>1,0</td><td>6</td><td>0,5</td><td>3,0</td><td>6</td></tr>
+                        <tr><td>1,5</td><td>2,0</td><td>10</td><td>3,5</td><td>6,0</td><td>10</td></tr>
+                        <tr><td>2,5</td><td>3,0</td><td>16</td><td>6,5</td><td>10,0</td><td>16</td></tr>
+                        <tr><td>3,5</td><td>4,0</td><td>20</td><td>10,5</td><td>12,0</td><td>20</td></tr>
+                        <tr><td>4,5</td><td>5,0</td><td>25</td><td>12,5</td><td>16,0</td><td>25</td></tr>
+                        <tr><td>5,5</td><td>6,0</td><td>32</td><td>16,5</td><td>20,0</td><td>32</td></tr>
+                        <tr><td></td><td></td><td></td><td>20,5</td><td>25,0</td><td>40</td></tr>
+                        <tr><td></td><td></td><td></td><td>25,5</td><td>32,0</td><td>50</td></tr>
+                        <tr><td></td><td></td><td></td><td>32,5</td><td>40,0</td><td>63</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="phase-selector">
+                <label><input type="radio" name="faza" value="1f" checked> 1-fazowa</label>
+                <label><input type="radio" name="faza" value="3f"> 3-fazowa</label>
+            </div>
+            <div class="form-row">
+                <label for="moc-umowna">Wybierz moc umowną [kW]</label>
+                <div class="input-wrapper">
+                    <select id="moc-umowna-1f" class="moc-umowna-select" required>
+                        <option value="" disabled selected>Wybierz moc...</option>
+                    </select>
+                    <select id="moc-umowna-3f" class="moc-umowna-select" required style="display:none;">
+                        <option value="" disabled selected>Wybierz moc...</option>
+                    </select>
+                    <div class="form-error">Wybierz moc umowną</div>
+                </div>
+            </div>
+            <div id="info-mocy-umownej"></div>
         </div>
-        
+
+        <button type="button" id="Przelicz">Sprawdź</button>
         <div id="Wynik"></div>
     </div>
 
@@ -58,64 +144,129 @@
         $(document).ready(function() {
             'use strict';
             
-            function validateForm() {
-                let isValid = true;
-                $('#Dane .has-error').removeClass('has-error');
-                $('#Dane .tn-forms-empty-validation').hide();
-                $('#Dane input[required]').each(function() {
-                    if ($(this).val() === '') {
-                        isValid = false;
-                        $(this).closest('.tn-forms-row').addClass('has-error').find('.tn-forms-empty-validation').show();
-                    }
-                });
-                return isValid;
-            }
+            // --- DATA STORE ---
+            const daneMocy = {
+                '1f': [
+                    { umowna: 0.5, przylaczeniowa: 1, zabezpieczenie: 6 }, { umowna: 1.5, przylaczeniowa: 2, zabezpieczenie: 10 },
+                    { umowna: 2.5, przylaczeniowa: 3, zabezpieczenie: 16 }, { umowna: 3.5, przylaczeniowa: 4, zabezpieczenie: 20 },
+                    { umowna: 4.5, przylaczeniowa: 5, zabezpieczenie: 25 }, { umowna: 5.5, przylaczeniowa: 6, zabezpieczenie: 32 }
+                ],
+                '3f': [
+                    { umowna: 0.5, przylaczeniowa: 3.0, zabezpieczenie: 6 }, { umowna: 3.5, przylaczeniowa: 6.0, zabezpieczenie: 10 },
+                    { umowna: 6.5, przylaczeniowa: 10.0, zabezpieczenie: 16 }, { umowna: 10.5, przylaczeniowa: 12.0, zabezpieczenie: 20 },
+                    { umowna: 12.5, przylaczeniowa: 16.0, zabezpieczenie: 25 }, { umowna: 16.5, przylaczeniowa: 20.0, zabezpieczenie: 32 },
+                    { umowna: 20.5, przylaczeniowa: 25.0, zabezpieczenie: 40 }, { umowna: 25.5, przylaczeniowa: 32.0, zabezpieczenie: 50 },
+                    { umowna: 32.5, przylaczeniowa: 40.0, zabezpieczenie: 63 }
+                ]
+            };
 
+            // --- INITIALIZATION ---
+            function populateDropdowns() {
+                const select1f = $('#moc-umowna-1f');
+                const select3f = $('#moc-umowna-3f');
+                daneMocy['1f'].forEach(d => select1f.append(`<option value="${d.umowna}">${d.umowna} kW</option>`));
+                daneMocy['3f'].forEach(d => select3f.append(`<option value="${d.umowna}">${d.umowna} kW</option>`));
+            }
+            populateDropdowns();
+
+            // --- EVENT HANDLERS ---
+            $('input[name="faza"]').on('change', function() {
+                $('.moc-umowna-select').hide().val('');
+                $('#info-mocy-umownej').hide().html('');
+                $('#Wynik').html('');
+                if (this.value === '1f') {
+                    $('#moc-umowna-1f').show();
+                } else {
+                    $('#moc-umowna-3f').show();
+                }
+            });
+
+            $('.moc-umowna-select').on('change', function() {
+                const mocUmowna = parseFloat($(this).val());
+                if(isNaN(mocUmowna)) {
+                     $('#info-mocy-umownej').hide().html('');
+                     return;
+                }
+                const faza = $('input[name="faza"]:checked').val();
+                const dane = daneMocy[faza].find(d => d.umowna === mocUmowna);
+
+                if (dane) {
+                    $('#info-mocy-umownej')
+                        .html(`Moc Przyłączeniowa: <span>${dane.przylaczeniowa.toFixed(1)} kW</span> | Zabezpieczenie: <span>${dane.zabezpieczenie} A</span>`)
+                        .show();
+                    $(this).closest('.form-row').removeClass('has-error');
+                }
+            });
+
+            // --- MAIN CALCULATION ON CLICK ---
             $('#Przelicz').on('click', function() {
                 if (!validateForm()) {
-                    $('#Wynik').html('');
+                    $('#Wynik').html('').hide();
                     return;
                 }
                 
-                const sumaMocy = parseFloat($('#Suma_mocy').val());
-                const mocMagazynu = parseFloat($('#Moc_magazynu').val());
-                const mocZainstalowana = parseFloat($('#Moc_zainstalowana').val());
+                const panele = parseFloat($('#panele').val());
+                const falownik = parseFloat($('#falownik').val());
+                const magazyn = parseFloat($('#magazyn').val());
+                const mocUmowna = parseFloat($('.moc-umowna-select:visible').val());
 
-                // Perform the two primary condition checks
-                const check1_isMet = mocMagazynu <= mocZainstalowana;
-                const check2_isMet = sumaMocy <= mocZainstalowana;
+                let mocMikroinstalacji = 0;
+
+                // Implement the calculation logic from your flowchart
+                if (magazyn == 0) {
+                    mocMikroinstalacji = panele;
+                } else {
+                    if (falownik > panele) {
+                        mocMikroinstalacji = panele + magazyn;
+                    } else { // falownik <= panele
+                        if (magazyn <= panele) {
+                            mocMikroinstalacji = panele;
+                        } else { // magazyn > panele
+                            mocMikroinstalacji = panele + magazyn;
+                        }
+                    }
+                }
                 
-                // *** THE CORRECTED LOGIC FOR QUESTION 3 ***
-                // Summing occurs if EITHER of the first two conditions is NOT met.
-                const summingOccurs = !check1_isMet || !check2_isMet;
-
-                const resultHTML = `
-                    <div class="row tn-forms-text-control tn-forms-row">
-                        <div class="col-sm-12"><p style="font-size: 22px"><b>Spełnienie warunków ustawowych:</b></p></div>
-                    </div>
-                    <div class="row tn-forms-input tn-forms-row">
-                        <div class="col-sm-8"><label for="Wynik_1">Czy moc zainstalowana magazynu energii elektrycznej nie jest większa od mocy zainstalowanej elektrycznej mikroinstalacji (paneli PV, turbiny, generatora)?</label></div>
-                        <div class="col-sm-2"><input value="${check1_isMet ? 'TAK' : 'NIE'}" class="tn-forms-text-input" readonly="true" id="Wynik_1" style="color:${check1_isMet ? 'rgb(60, 179, 113)' : 'red'}; font-weight:bold;"></div>
-                    </div>
-                    <div class="row tn-forms-input tn-forms-row">
-                        <div class="col-sm-8"><label for="Wynik_2">Czy łączna moc możliwa do wprowadzenia do sieci (czyt. suma mocy maksymalnych inwerterów) nie jest większa niż moc zainstalowana elektryczna mikroinstalacji (paneli PV, turbiny, generatora)?</label></div>
-                        <div class="col-sm-2"><input value="${check2_isMet ? 'TAK' : 'NIE'}" class="tn-forms-text-input" readonly="true" id="Wynik_2" style="color:${check2_isMet ? 'rgb(60, 179, 113)' : 'red'}; font-weight:bold;"></div>
-                    </div>
-                    <div class="row tn-forms-input tn-forms-row">
-                        <div class="col-sm-8"><label for="Wynik_3"><h4 style="color:rgb(226, 0, 122);"><b>Czy nastąpi zsumowanie mocy zainstalowanej magazynu z mocą sumaryczną zainstalowanego w mikroinstalacji źródła OZE?</b></h4></label></div>
-                        <div class="col-sm-2" style="margin-top: 10px;"><input value="${summingOccurs ? 'TAK' : 'NIE'}" class="tn-forms-text-input" readonly="true" id="Wynik_3" style="color:${summingOccurs ? 'rgb(60, 179, 113)' : 'red'}; font-weight:bold;"></div>
-                    </div>
-                    <hr>
-                    <div id="Wazne">
-                        <div class="s19-banner-alert">
-                            <strong><span style="font-size: 16px;">Ważne</span></strong><br><br>
-                            Abyśmy mogli pozytywnie rozpatrzyć Twoje zgłoszenie przełączenia mikroinstalacji, sumaryczna moc zainstalowana wraz z magazynem energii elektrycznej po przeliczeniu, musi zawierać parametry techniczne urządzeń, które nie przekroczą istniejącej mocy przyłączeniowej obiektu.
+                // Perform the final condition check and generate result
+                let resultHTML;
+                if (mocMikroinstalacji <= mocUmowna) {
+                    resultHTML = `
+                        <div class="result-box result-positive">
+                            <h3>Odbiór Pozytywny</h3>
+                            <p>Moc mikroinstalacji (${mocMikroinstalacji.toFixed(2)} kW) nie przekracza mocy umownej (${mocUmowna.toFixed(2)} kW).</p>
                         </div>
-                    </div>
-                `;
+                    `;
+                } else {
+                    resultHTML = `
+                        <div class="result-box result-negative">
+                            <h3>Odbiór Negatywny</h3>
+                            <p>Moc mikroinstalacji (${mocMikroinstalacji.toFixed(2)} kW) przekracza moc umowną (${mocUmowna.toFixed(2)} kW).</p>
+                            <p class="result-details">Konieczna poprawa wniosku o przyłączenie.</p>
+                        </div>
+                    `;
+                }
                 
                 $('#Wynik').html(resultHTML).show();
             });
+
+            function validateForm() {
+                let isValid = true;
+                $('.form-row.has-error').removeClass('has-error');
+                
+                $('#panele, #falownik, #magazyn').each(function() {
+                    if ($(this).val() === '') {
+                        isValid = false;
+                        $(this).closest('.form-row').addClass('has-error');
+                    }
+                });
+
+                const activeSelect = $('.moc-umowna-select:visible');
+                if (activeSelect.val() === '' || activeSelect.val() === null) {
+                    isValid = false;
+                    activeSelect.closest('.form-row').addClass('has-error');
+                }
+                return isValid;
+            }
         });
     </script>
 </body>
